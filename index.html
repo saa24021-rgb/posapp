@@ -6,6 +6,11 @@
     <title>POS App - 売上管理システム</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
@@ -15,7 +20,6 @@
     <style>
         body {
             font-family: 'Noto Sans JP', sans-serif;
-            background-color: #f8fafc;
         }
         .animate-fade-in {
             animation: fadeIn 0.3s ease-in-out;
@@ -26,10 +30,10 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-200">
 
     <!-- App Navigation Header -->
-    <header class="bg-indigo-600 text-white shadow-md sticky top-0 z-30">
+    <header class="bg-indigo-600 dark:bg-indigo-900 text-white shadow-md sticky top-0 z-30 transition-colors duration-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
@@ -41,13 +45,19 @@
                 </div>
             </div>
 
-            <!-- User Auth Profile / Logout -->
-            <div id="userProfileArea" class="hidden flex items-center space-x-3">
-                <div class="flex items-center space-x-2 bg-indigo-700/50 px-3 py-1.5 rounded-full border border-indigo-500/30">
+            <!-- User Auth Profile / Dark Mode / Logout -->
+            <div id="userProfileArea" class="hidden flex items-center space-x-2 sm:space-x-3">
+                <div class="flex items-center space-x-2 bg-indigo-700/50 dark:bg-indigo-950/60 px-3 py-1.5 rounded-full border border-indigo-500/30">
                     <img id="userAvatar" src="https://placehold.co/100x100/4f46e5/ffffff?text=U" alt="User Avatar" class="w-7 h-7 rounded-full object-cover border border-white/40">
-                    <span id="userName" class="text-sm font-medium max-w-[120px] sm:max-w-[180px] truncate">ユーザー</span>
+                    <span id="userName" class="text-sm font-medium max-w-[100px] sm:max-w-[160px] truncate">ユーザー</span>
+                    <button id="editNameBtn" title="ユーザー名を変更" class="hover:text-indigo-200 transition p-1 text-white/80 hover:text-white">
+                        <i class="fa-solid fa-pen text-xs"></i>
+                    </button>
                 </div>
-                <button id="logoutBtn" class="bg-indigo-500/30 hover:bg-red-500/80 text-white px-3 py-1.5 rounded-lg text-sm transition font-medium border border-white/20 flex items-center space-x-1">
+                <button id="themeToggleBtn" title="ダークモード切り替え" class="bg-indigo-500/30 dark:bg-indigo-800/40 hover:bg-indigo-500/50 text-white p-2 rounded-xl text-sm transition flex items-center justify-center border border-white/20">
+                    <i id="themeIcon" class="fa-solid fa-moon"></i>
+                </button>
+                <button id="logoutBtn" class="bg-indigo-500/30 hover:bg-red-500/80 text-white px-3 py-1.5 rounded-xl text-sm transition font-medium border border-white/20 flex items-center space-x-1">
                     <i class="fa-solid fa-right-from-bracket"></i>
                     <span class="hidden sm:inline">ログアウト</span>
                 </button>
@@ -59,20 +69,20 @@
 
         <!-- Login Required Screen (Visible when unauthenticated) -->
         <div id="loginScreen" class="flex flex-col items-center justify-center min-h-[70vh] py-12">
-            <div class="bg-white p-8 sm:p-10 rounded-2xl shadow-xl border border-slate-100 max-w-md w-full text-center space-y-6 animate-fade-in">
-                <div class="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+            <div class="bg-white dark:bg-slate-800 p-8 sm:p-10 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 max-w-md w-full text-center space-y-6 animate-fade-in">
+                <div class="w-20 h-20 bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mx-auto shadow-inner">
                     <i class="fa-solid fa-cash-register text-3xl"></i>
                 </div>
                 <div class="space-y-2">
-                    <h2 class="text-2xl font-bold text-slate-800">posapp へようこそ</h2>
-                    <p class="text-sm text-slate-500">Googleアカウントでログインして売上記録を安全に同期管理しましょう。</p>
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100">posapp へようこそ</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Googleアカウントでログインして売上記録を安全に同期管理しましょう。</p>
                 </div>
 
                 <!-- Error Notification Box for Auth -->
-                <div id="authErrorMessage" class="hidden p-3 bg-red-50 text-red-600 text-xs rounded-lg text-left border border-red-200"></div>
+                <div id="authErrorMessage" class="hidden p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 text-xs rounded-lg text-left border border-red-200 dark:border-red-800"></div>
 
                 <div class="pt-2">
-                    <button id="googleLoginBtn" class="w-full flex items-center justify-center space-x-3 bg-white border border-slate-300 hover:border-indigo-500 hover:bg-indigo-50/30 text-slate-700 font-semibold py-3 px-4 rounded-xl shadow-sm transition duration-200">
+                    <button id="googleLoginBtn" class="w-full flex items-center justify-center space-x-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:border-indigo-500 hover:bg-indigo-50/30 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold py-3 px-4 rounded-xl shadow-sm transition duration-200">
                         <svg class="w-5 h-5" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -83,7 +93,7 @@
                     </button>
                 </div>
 
-                <div class="text-xs text-slate-400 pt-4 border-t border-slate-100">
+                <div class="text-xs text-slate-400 dark:text-slate-500 pt-4 border-t border-slate-100 dark:border-slate-700">
                     <p><i class="fa-solid fa-shield-halved mr-1"></i> データはFirebase Firestoreに暗号化保存されます</p>
                 </div>
             </div>
@@ -94,35 +104,35 @@
 
             <!-- Summary KPI Statistics Cards -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">総売上金額</span>
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200/80 dark:border-slate-700 flex flex-col justify-between">
+                    <span class="text-xs font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">総売上金額</span>
                     <div class="mt-2 flex items-baseline justify-between">
-                        <span id="statTotalSales" class="text-xl sm:text-2xl font-extrabold text-indigo-600">¥0</span>
-                        <div class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg"><i class="fa-solid fa-yen-sign"></i></div>
+                        <span id="statTotalSales" class="text-xl sm:text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">¥0</span>
+                        <div class="p-1.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-lg"><i class="fa-solid fa-yen-sign"></i></div>
                     </div>
                 </div>
 
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">総取引件数</span>
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200/80 dark:border-slate-700 flex flex-col justify-between">
+                    <span class="text-xs font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">総取引件数</span>
                     <div class="mt-2 flex items-baseline justify-between">
-                        <span id="statTotalCount" class="text-xl sm:text-2xl font-extrabold text-slate-700">0件</span>
-                        <div class="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-receipt"></i></div>
+                        <span id="statTotalCount" class="text-xl sm:text-2xl font-extrabold text-slate-700 dark:text-slate-200">0件</span>
+                        <div class="p-1.5 bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 rounded-lg"><i class="fa-solid fa-receipt"></i></div>
                     </div>
                 </div>
 
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">販売点数</span>
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200/80 dark:border-slate-700 flex flex-col justify-between">
+                    <span class="text-xs font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">販売点数</span>
                     <div class="mt-2 flex items-baseline justify-between">
-                        <span id="statTotalQuantity" class="text-xl sm:text-2xl font-extrabold text-slate-700">0個</span>
-                        <div class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg"><i class="fa-solid fa-boxes-stacked"></i></div>
+                        <span id="statTotalQuantity" class="text-xl sm:text-2xl font-extrabold text-slate-700 dark:text-slate-200">0個</span>
+                        <div class="p-1.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-lg"><i class="fa-solid fa-boxes-stacked"></i></div>
                     </div>
                 </div>
 
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">本日の売上</span>
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200/80 dark:border-slate-700 flex flex-col justify-between">
+                    <span class="text-xs font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">本日の売上</span>
                     <div class="mt-2 flex items-baseline justify-between">
-                        <span id="statTodaySales" class="text-xl sm:text-2xl font-extrabold text-indigo-600">¥0</span>
-                        <div class="p-1.5 bg-amber-50 text-amber-600 rounded-lg"><i class="fa-solid fa-calendar-day"></i></div>
+                        <span id="statTodaySales" class="text-xl sm:text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">¥0</span>
+                        <div class="p-1.5 bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 rounded-lg"><i class="fa-solid fa-calendar-day"></i></div>
                     </div>
                 </div>
             </div>
@@ -130,19 +140,19 @@
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                 <!-- Input Registration Form (Left Column on Desktop) -->
-                <div class="lg:col-span-5 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200/80 h-fit space-y-4">
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                        <h2 class="text-lg font-bold text-slate-800 flex items-center space-x-2">
-                            <i id="formIcon" class="fa-solid fa-plus-circle text-indigo-600"></i>
+                <div class="lg:col-span-5 bg-white dark:bg-slate-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700 h-fit space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
+                        <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-2">
+                            <i id="formIcon" class="fa-solid fa-plus-circle text-indigo-600 dark:text-indigo-400"></i>
                             <span id="formTitle">売上データの登録</span>
                         </h2>
-                        <button id="cancelEditBtn" class="hidden text-xs text-slate-500 hover:text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md transition">
+                        <button id="cancelEditBtn" class="hidden text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-md transition">
                             編集キャンセル
                         </button>
                     </div>
 
                     <!-- Input Validation Alert Message -->
-                    <div id="formValidationAlert" class="hidden p-3 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl space-y-1">
+                    <div id="formValidationAlert" class="hidden p-3 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs rounded-xl space-y-1">
                         <div class="font-bold flex items-center space-x-1">
                             <i class="fa-solid fa-triangle-exclamation"></i>
                             <span>入力内容をご確認ください</span>
@@ -155,59 +165,59 @@
 
                         <!-- 1. 商品名 (Product Name) -->
                         <div>
-                            <label for="productName" class="block text-xs font-semibold text-slate-600 uppercase mb-1">
+                            <label for="productName" class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                 商品名 <span class="text-red-500">*</span>
                             </label>
                             <input type="text" id="productName" placeholder="例: コーヒー, Tシャツ" required
-                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition text-sm">
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition text-sm">
                         </div>
 
                         <!-- 2. 単価 (Unit Price) & 3. 個数 (Quantity) Row -->
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label for="unitPrice" class="block text-xs font-semibold text-slate-600 uppercase mb-1">
+                                <label for="unitPrice" class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                     単価 (円) <span class="text-red-500">*</span>
                                 </label>
                                 <input type="number" id="unitPrice" min="0" placeholder="0" required
-                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition text-sm">
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition text-sm">
                             </div>
 
                             <div>
-                                <label for="quantity" class="block text-xs font-semibold text-slate-600 uppercase mb-1">
+                                <label for="quantity" class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                     個数 <span class="text-red-500">*</span>
                                 </label>
                                 <input type="number" id="quantity" min="0.01" step="any" value="1" required
-                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition text-sm">
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition text-sm">
                             </div>
                         </div>
 
                         <!-- Auto Calculated Total Preview -->
-                        <div class="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3 flex justify-between items-center">
-                            <span class="text-xs font-semibold text-indigo-900">合計金額 (自動計算):</span>
-                            <span id="calculatedTotalDisplay" class="text-lg font-bold text-indigo-600">¥0</span>
+                        <div class="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3 flex justify-between items-center">
+                            <span class="text-xs font-semibold text-indigo-900 dark:text-indigo-300">合計金額 (自動計算):</span>
+                            <span id="calculatedTotalDisplay" class="text-lg font-bold text-indigo-600 dark:text-indigo-400">¥0</span>
                         </div>
 
                         <!-- 4. 日付 (Date) -->
                         <div>
-                            <label for="saleDate" class="block text-xs font-semibold text-slate-600 uppercase mb-1">
+                            <label for="saleDate" class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                 日付 <span class="text-red-500">*</span>
                             </label>
                             <input type="date" id="saleDate" required
-                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition text-sm">
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition text-sm">
                         </div>
 
                         <!-- 5. メモ (Memo) -->
                         <div>
-                            <label for="memo" class="block text-xs font-semibold text-slate-600 uppercase mb-1">
+                            <label for="saleMemo" class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                 メモ
                             </label>
-                            <textarea id="memo" rows="2" placeholder="備考や担当者メモを入力..."
-                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition text-sm resize-none"></textarea>
+                            <textarea id="saleMemo" rows="2" placeholder="備考や担当者メモを入力..."
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition text-sm resize-none"></textarea>
                         </div>
 
                         <!-- Submit Button -->
                         <button type="submit" id="submitFormBtn"
-                            class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-indigo-200 transition duration-150 flex items-center justify-center space-x-2">
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition duration-150 flex items-center justify-center space-x-2">
                             <i id="submitIcon" class="fa-solid fa-check"></i>
                             <span id="submitBtnText">登録する</span>
                         </button>
@@ -218,19 +228,19 @@
                 <div class="lg:col-span-7 space-y-6">
 
                     <!-- Filter & Search Controls -->
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-3">
                         <div class="relative w-full sm:w-64">
                             <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
                             <input type="text" id="searchInput" placeholder="商品名で絞り込み..."
-                                class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs">
+                                class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs">
                         </div>
                         <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-                            <select id="sortBy" class="px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+                            <select id="sortBy" class="px-3 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-xs bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
                                 <option value="dateDesc">日付が新しい順</option>
                                 <option value="dateAsc">日付が古い順</option>
                                 <option value="amountDesc">金額が高い順</option>
                             </select>
-                            <button id="toggleGraphBtn" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition flex items-center space-x-1">
+                            <button id="toggleGraphBtn" class="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition flex items-center space-x-1">
                                 <i class="fa-solid fa-chart-line"></i>
                                 <span>グラフ表示</span>
                             </button>
@@ -238,13 +248,13 @@
                     </div>
 
                     <!-- Sales Visualization Chart (Collapsible) -->
-                    <div id="chartContainer" class="hidden bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
+                    <div id="chartContainer" class="hidden bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700 space-y-3">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-sm font-bold text-slate-700 flex items-center space-x-2">
-                                <i class="fa-solid fa-chart-bar text-indigo-600"></i>
+                            <h3 class="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center space-x-2">
+                                <i class="fa-solid fa-chart-bar text-indigo-600 dark:text-indigo-400"></i>
                                 <span>日別売上グラフ</span>
                             </h3>
-                            <span class="text-xs text-slate-400">直近の売上推移</span>
+                            <span class="text-xs text-slate-400 dark:text-slate-500">直近の売上推移</span>
                         </div>
                         <div class="relative h-56 w-full">
                             <canvas id="salesChart"></canvas>
@@ -252,53 +262,53 @@
                     </div>
 
                     <!-- Daily Summary Aggregation View -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
-                        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                            <h3 class="text-sm font-bold text-slate-800 flex items-center space-x-2">
-                                <i class="fa-solid fa-list-check text-indigo-600"></i>
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700 overflow-hidden">
+                        <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-2">
+                                <i class="fa-solid fa-list-check text-indigo-600 dark:text-indigo-400"></i>
                                 <span>登録データ一覧</span>
                             </h3>
-                            <span id="recordCountBadge" class="text-xs bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-full font-bold">0 件</span>
+                            <span id="recordCountBadge" class="text-xs bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-2.5 py-0.5 rounded-full font-bold">0 件</span>
                         </div>
 
                         <!-- Data List Container -->
-                        <div class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto" id="dataListContainer">
+                        <div class="divide-y divide-slate-100 dark:divide-slate-700 max-h-[500px] overflow-y-auto" id="dataListContainer">
                             <!-- Loading Spinner -->
-                            <div id="loadingState" class="py-12 text-center text-slate-400">
-                                <i class="fa-solid fa-circle-notch fa-spin text-2xl text-indigo-600 mb-2"></i>
+                            <div id="loadingState" class="py-12 text-center text-slate-400 dark:text-slate-500">
+                                <i class="fa-solid fa-circle-notch fa-spin text-2xl text-indigo-600 dark:text-indigo-400 mb-2"></i>
                                 <p class="text-xs">データを読み込んでいます...</p>
                             </div>
 
                             <!-- Empty State -->
-                            <div id="emptyState" class="hidden py-12 text-center text-slate-400 space-y-2">
-                                <i class="fa-solid fa-inbox text-3xl text-slate-300"></i>
+                            <div id="emptyState" class="hidden py-12 text-center text-slate-400 dark:text-slate-500 space-y-2">
+                                <i class="fa-solid fa-inbox text-3xl text-slate-300 dark:text-slate-600"></i>
                                 <p class="text-sm font-medium">登録されている売上データがありません</p>
-                                <p class="text-xs text-slate-400">左側のフォームから売上を登録してください</p>
+                                <p class="text-xs text-slate-400 dark:text-slate-500">左側のフォームから売上を登録してください</p>
                             </div>
 
                             <!-- List Items Rendered Dynamically Here -->
-                            <div id="salesList" class="divide-y divide-slate-100"></div>
+                            <div id="salesList" class="divide-y divide-slate-100 dark:divide-slate-700"></div>
                         </div>
                     </div>
 
                     <!-- Daily Aggregated Summary Table -->
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
-                        <h3 class="text-sm font-bold text-slate-800 flex items-center space-x-2">
-                            <i class="fa-solid fa-calendar-days text-indigo-600"></i>
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700 space-y-3">
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-2">
+                            <i class="fa-solid fa-calendar-days text-indigo-600 dark:text-indigo-400"></i>
                             <span>日付ごとの合計金額集計</span>
                         </h3>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-xs">
                                 <thead>
-                                    <tr class="border-b border-slate-200 text-slate-400 uppercase tracking-wider">
+                                    <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-400 uppercase tracking-wider">
                                         <th class="py-2 px-3">日付</th>
                                         <th class="py-2 px-3 text-right">取引件数</th>
                                         <th class="py-2 px-3 text-right">合計金額</th>
                                     </tr>
                                 </thead>
-                                <tbody id="dailySummaryBody" class="divide-y divide-slate-100 font-medium">
+                                <tbody id="dailySummaryBody" class="divide-y divide-slate-100 dark:divide-slate-700 font-medium">
                                     <tr>
-                                        <td colspan="3" class="py-4 text-center text-slate-400">集計データがありません</td>
+                                        <td colspan="3" class="py-4 text-center text-slate-400 dark:text-slate-500">集計データがありません</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -311,21 +321,46 @@
         </div>
     </main>
 
+    <!-- Custom Modal for User Display Name Change -->
+    <div id="nameModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4 animate-fade-in border border-slate-100 dark:border-slate-700">
+            <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mx-auto">
+                <i class="fa-solid fa-user-pen text-xl"></i>
+            </div>
+            <div class="text-center space-y-1">
+                <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">ユーザー名の変更</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">アプリ内に表示される名前を変更します。</p>
+            </div>
+            <div>
+                <input type="text" id="newUserNameInput" placeholder="新しいユーザー名" 
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm">
+            </div>
+            <div class="flex space-x-3 pt-2">
+                <button id="cancelNameBtn" class="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition">
+                    キャンセル
+                </button>
+                <button id="confirmNameBtn" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-md shadow-indigo-200 dark:shadow-none">
+                    保存する
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Modal for Delete Confirmation -->
     <div id="deleteModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4 animate-fade-in border border-slate-100">
-            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4 animate-fade-in border border-slate-100 dark:border-slate-700">
+            <div class="w-12 h-12 bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto">
                 <i class="fa-solid fa-trash-can text-xl"></i>
             </div>
             <div class="text-center space-y-1">
-                <h3 class="text-base font-bold text-slate-800">データを削除しますか？</h3>
-                <p class="text-xs text-slate-500">この操作は取り消せません。本当に削除してもよろしいですか？</p>
+                <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">データを削除しますか？</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">この操作は取り消せません。本当に削除してもよろしいですか？</p>
             </div>
             <div class="flex space-x-3 pt-2">
-                <button id="cancelDeleteBtn" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+                <button id="cancelDeleteBtn" class="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition">
                     キャンセル
                 </button>
-                <button id="confirmDeleteBtn" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition shadow-md shadow-red-200">
+                <button id="confirmDeleteBtn" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition shadow-md shadow-red-200 dark:shadow-none">
                     削除する
                 </button>
             </div>
@@ -348,6 +383,8 @@
             getFirestore, 
             collection, 
             doc, 
+            getDoc,
+            setDoc,
             addDoc, 
             updateDoc, 
             deleteDoc, 
@@ -374,6 +411,8 @@
 
         // Application State
         let currentUser = null;
+        let customDisplayName = null;
+        let isDarkMode = false;
         let salesRecords = [];
         let unsubscribeSnapshot = null;
         let pendingDeleteId = null;
@@ -387,7 +426,15 @@
         const userProfileArea = document.getElementById('userProfileArea');
         const userAvatar = document.getElementById('userAvatar');
         const userName = document.getElementById('userName');
+        const editNameBtn = document.getElementById('editNameBtn');
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const themeIcon = document.getElementById('themeIcon');
         const logoutBtn = document.getElementById('logoutBtn');
+
+        const nameModal = document.getElementById('nameModal');
+        const newUserNameInput = document.getElementById('newUserNameInput');
+        const cancelNameBtn = document.getElementById('cancelNameBtn');
+        const confirmNameBtn = document.getElementById('confirmNameBtn');
 
         const salesForm = document.getElementById('salesForm');
         const editRecordId = document.getElementById('editRecordId');
@@ -395,7 +442,7 @@
         const unitPrice = document.getElementById('unitPrice');
         const quantity = document.getElementById('quantity');
         const saleDate = document.getElementById('saleDate');
-        const memo = document.getElementById('memo');
+        const saleMemo = document.getElementById('saleMemo');
         const calculatedTotalDisplay = document.getElementById('calculatedTotalDisplay');
         const formTitle = document.getElementById('formTitle');
         const formIcon = document.getElementById('formIcon');
@@ -424,6 +471,84 @@
         const deleteModal = document.getElementById('deleteModal');
         const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
         const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+        // Dark Mode Logic
+        function applyTheme(darkMode) {
+            isDarkMode = darkMode;
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+                themeIcon.className = "fa-solid fa-sun text-amber-300";
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeIcon.className = "fa-solid fa-moon text-white";
+            }
+            if (chartInstance && !chartContainer.classList.contains('hidden')) {
+                updateChart();
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', async () => {
+            const nextMode = !isDarkMode;
+            applyTheme(nextMode);
+            if (currentUser) {
+                try {
+                    const settingsRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'profile');
+                    await setDoc(settingsRef, { darkMode: nextMode }, { merge: true });
+                } catch (err) {
+                    console.error("Failed to save theme settings:", err);
+                }
+            }
+        });
+
+        // User Name Edit Modal Trigger & Logic
+        editNameBtn.addEventListener('click', () => {
+            newUserNameInput.value = userName.textContent;
+            nameModal.classList.remove('hidden');
+            newUserNameInput.focus();
+        });
+
+        cancelNameBtn.addEventListener('click', () => {
+            nameModal.classList.add('hidden');
+        });
+
+        confirmNameBtn.addEventListener('click', async () => {
+            const newName = newUserNameInput.value.trim();
+            if (!newName) return;
+
+            customDisplayName = newName;
+            userName.textContent = newName;
+            nameModal.classList.add('hidden');
+
+            if (currentUser) {
+                try {
+                    const settingsRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'profile');
+                    await setDoc(settingsRef, { customDisplayName: newName }, { merge: true });
+                } catch (err) {
+                    console.error("Failed to save user name:", err);
+                }
+            }
+        });
+
+        // Load User Profile Settings
+        async function loadUserSettings() {
+            if (!currentUser) return;
+            try {
+                const settingsRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'profile');
+                const snap = await getDoc(settingsRef);
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (data.customDisplayName) {
+                        customDisplayName = data.customDisplayName;
+                        userName.textContent = customDisplayName;
+                    }
+                    if (typeof data.darkMode === 'boolean') {
+                        applyTheme(data.darkMode);
+                    }
+                }
+            } catch (err) {
+                console.error("Error reading profile settings:", err);
+            }
+        }
 
         // Default Today's Date in YYYY-MM-DD
         const getTodayString = () => {
@@ -455,7 +580,6 @@
                 await signInWithPopup(auth, provider);
             } catch (error) {
                 console.error("Google Auth error:", error);
-                // Fallback for iframe popup restriction
                 try {
                     if (typeof __initial_auth_token !== 'undefined') {
                         await signInWithCustomToken(auth, __initial_auth_token);
@@ -479,7 +603,7 @@
         });
 
         // Auth State Listener
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
                 // UI Toggle
@@ -487,16 +611,20 @@
                 appScreen.classList.remove('hidden');
                 userProfileArea.classList.remove('hidden');
 
-                userName.textContent = user.displayName || user.email || "ユーザー";
+                userName.textContent = customDisplayName || user.displayName || user.email || "ユーザー";
                 if (user.photoURL) {
                     userAvatar.src = user.photoURL;
                 }
+
+                // Load user settings (theme, display name override)
+                await loadUserSettings();
 
                 // Start Firestore realtime sync
                 initRealtimeSync();
             } else {
                 currentUser = null;
                 salesRecords = [];
+                customDisplayName = null;
                 loginScreen.classList.remove('hidden');
                 appScreen.classList.add('hidden');
                 userProfileArea.classList.add('hidden');
@@ -577,7 +705,7 @@
                 quantity: qtyNum,
                 totalAmount: totalNum,
                 saleDate: saleDate.value,
-                memo: memo.value.trim(),
+                memo: saleMemo.value.trim(),
                 updatedAt: new Date().toISOString()
             };
 
@@ -614,7 +742,7 @@
             saleDate.value = getTodayString();
             updateCalculatedTotal();
             formTitle.textContent = "売上データの登録";
-            formIcon.className = "fa-solid fa-plus-circle text-indigo-600";
+            formIcon.className = "fa-solid fa-plus-circle text-indigo-600 dark:text-indigo-400";
             submitBtnText.textContent = "登録する";
             submitIcon.className = "fa-solid fa-check";
             cancelEditBtn.classList.add('hidden');
@@ -668,33 +796,33 @@
             } else {
                 emptyState.classList.add('hidden');
                 salesList.innerHTML = filtered.map(rec => `
-                    <div class="p-4 hover:bg-slate-50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div class="space-y-1">
                             <div class="flex items-center space-x-2">
-                                <span class="text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
+                                <span class="text-xs font-semibold px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded">
                                     <i class="fa-regular fa-calendar mr-1"></i>${rec.saleDate}
                                 </span>
-                                <h4 class="font-bold text-slate-800 text-base">${escapeHtml(rec.productName)}</h4>
+                                <h4 class="font-bold text-slate-800 dark:text-slate-100 text-base">${escapeHtml(rec.productName)}</h4>
                             </div>
-                            <div class="text-xs text-slate-500 flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5">
+                            <div class="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5">
                                 <span>単価: ¥${(rec.unitPrice || 0).toLocaleString()}</span>
                                 <span>数量: ${rec.quantity}個</span>
-                                ${rec.memo ? `<span class="italic text-slate-400"><i class="fa-regular fa-comment mr-1"></i>${escapeHtml(rec.memo)}</span>` : ''}
+                                ${rec.memo ? `<span class="italic text-slate-400 dark:text-slate-500"><i class="fa-regular fa-comment mr-1"></i>${escapeHtml(rec.memo)}</span>` : ''}
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between sm:justify-end space-x-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
+                        <div class="flex items-center justify-between sm:justify-end space-x-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 dark:border-slate-700">
                             <div class="text-right">
-                                <div class="text-xs text-slate-400">小計</div>
-                                <div class="text-base font-extrabold text-indigo-600">¥${(rec.totalAmount || 0).toLocaleString()}</div>
+                                <div class="text-xs text-slate-400 dark:text-slate-500">小計</div>
+                                <div class="text-base font-extrabold text-indigo-600 dark:text-indigo-400">¥${(rec.totalAmount || 0).toLocaleString()}</div>
                             </div>
                             <div class="flex items-center space-x-1">
                                 <button onclick="window.editRecord('${rec.id}')" title="編集"
-                                    class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
+                                    class="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 rounded-lg transition">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
                                 <button onclick="window.askDeleteRecord('${rec.id}')" title="削除"
-                                    class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                                    class="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/60 rounded-lg transition">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </div>
@@ -725,15 +853,15 @@
             const sortedDates = Object.keys(dateMap).sort().reverse();
 
             if (sortedDates.length === 0) {
-                dailySummaryBody.innerHTML = `<tr><td colspan="3" class="py-4 text-center text-slate-400">集計データがありません</td></tr>`;
+                dailySummaryBody.innerHTML = `<tr><td colspan="3" class="py-4 text-center text-slate-400 dark:text-slate-500">集計データがありません</td></tr>`;
                 return;
             }
 
             dailySummaryBody.innerHTML = sortedDates.map(date => `
-                <tr class="hover:bg-slate-50">
-                    <td class="py-2.5 px-3 font-semibold text-slate-700">${date}</td>
-                    <td class="py-2.5 px-3 text-right text-slate-500">${dateMap[date].count} 件</td>
-                    <td class="py-2.5 px-3 text-right font-bold text-indigo-600">¥${dateMap[date].total.toLocaleString()}</td>
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                    <td class="py-2.5 px-3 font-semibold text-slate-700 dark:text-slate-200">${date}</td>
+                    <td class="py-2.5 px-3 text-right text-slate-500 dark:text-slate-400">${dateMap[date].count} 件</td>
+                    <td class="py-2.5 px-3 text-right font-bold text-indigo-600 dark:text-indigo-400">¥${dateMap[date].total.toLocaleString()}</td>
                 </tr>
             `).join('');
         }
@@ -758,6 +886,9 @@
                 chartInstance.destroy();
             }
 
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+            const textColor = isDarkMode ? '#94a3b8' : '#64748b';
+
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -765,7 +896,7 @@
                     datasets: [{
                         label: '売上金額 (円)',
                         data: totals,
-                        backgroundColor: 'rgba(79, 70, 229, 0.75)',
+                        backgroundColor: isDarkMode ? 'rgba(99, 102, 241, 0.85)' : 'rgba(79, 70, 229, 0.75)',
                         borderColor: 'rgb(79, 70, 229)',
                         borderWidth: 1,
                         borderRadius: 6
@@ -778,9 +909,15 @@
                         legend: { display: false }
                     },
                     scales: {
+                        x: {
+                            grid: { color: gridColor },
+                            ticks: { color: textColor }
+                        },
                         y: {
                             beginAtZero: true,
+                            grid: { color: gridColor },
                             ticks: {
+                                color: textColor,
                                 callback: (val) => '¥' + val.toLocaleString()
                             }
                         }
@@ -806,12 +943,12 @@
             unitPrice.value = record.unitPrice || 0;
             quantity.value = record.quantity || 1;
             saleDate.value = record.saleDate || getTodayString();
-            memo.value = record.memo || '';
+            saleMemo.value = record.memo || '';
 
             updateCalculatedTotal();
 
             formTitle.textContent = "売上データの編集";
-            formIcon.className = "fa-solid fa-pen-to-square text-indigo-600";
+            formIcon.className = "fa-solid fa-pen-to-square text-indigo-600 dark:text-indigo-400";
             submitBtnText.textContent = "更新保存";
             submitIcon.className = "fa-solid fa-arrows-rotate";
             cancelEditBtn.classList.remove('hidden');
@@ -854,6 +991,7 @@
             return str
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
+                .replace font-color-or-tags-here
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
