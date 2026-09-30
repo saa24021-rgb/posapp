@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS App - 売上管理システム</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f8fafc;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- App Navigation Header -->
+    <header class="bg-indigo-600 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
+                    <i class="fa-solid me-0 fa-cash-register text-xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">posapp</h1>
+                    <p class="text-xs text-indigo-200">売上管理システム</p>
+                </div>
+            </div>
+
+            <!-- User Auth Profile / Logout -->
+            <div id="userProfileArea" class="hidden flex items-center space-x-3">
+                <div class="flex items-center space-x-2 bg-indigo-700/50 px-3 py-1.5 rounded-full border border-indigo-500/30">
+                    <img id="userAvatar" src="https://placehold.co/100x100/4f46e5/ffffff?text=U" alt="User Avatar" class="w-7 h-7 rounded-full object-cover border border-white/40">
+                    <span id="userName" class="text-sm font-medium max-w-[120px] sm:max-w-[180px] truncate">ユーザー</span>
+                </div>
+                <button id="logoutBtn" class="bg-indigo-500/30 hover:bg-red-500/80 text-white px-3 py-1.5 rounded-lg text-sm transition font-medium border border-white/20 flex items-center space-x-1">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span class="hidden sm:inline">ログアウト</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- Login Required Screen (Visible when unauthenticated) -->
+        <div id="loginScreen" class="flex flex-col items-center justify-center min-h-[70vh] py-12">
+            <div class="bg-white p-8 sm:p-10 rounded-2xl shadow-xl border border-slate-100 max-w-md w-full text-center space-y-6 animate-fade-in">
+                <div class="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                    <i class="fa-solid fa-cash-register text-3xl"></i>
+                </div>
+                <div class="space-y-2">
+                    <h2 class="text-2xl font-bold text-slate-800">posapp へようこそ</h2>
+                    <p class="text-sm text-slate-500">Googleアカウントでログインして売上記録を安全に同期管理しましょう。</p>
+                </div>
+
+                <!-- Error Notification Box for Auth -->
+                <div id="authErrorMessage" class="hidden p-3 bg-red-50 text-red-600 text-xs rounded-lg text-left border border-red-200"></div>
+
+                <div class="pt-2">
+                    <button id="googleLoginBtn" class="w-full flex items-center justify-center space-x-3 bg-white border border-slate-300 hover:border-indigo-500 hover:bg-indigo-50/30 text-slate-700 font-semibold py-3 px-4 rounded-xl shadow-sm transition duration-200">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                        </svg>
+                        <span>Googleでログイン</span>
+                    </button>
+                </div>
+
+                <div class="text-xs text-slate-400 pt-4 border-t border-slate-100">
+                    <p><i class="fa-solid fa-shield-halved mr-1"></i> データはFirebase Firestoreに暗号化保存されます</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard App (Visible when logged in) -->
+        <div id="appScreen" class="hidden space-y-6 animate-fade-in">
+
+            <!-- Summary KPI Statistics Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">総売上金額</span>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="statTotalSales" class="text-xl sm:text-2xl font-extrabold text-indigo-600">¥0</span>
+                        <div class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg"><i class="fa-solid fa-yen-sign"></i></div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">総取引件数</span>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="statTotalCount" class="text-xl sm:text-2xl font-extrabold text-slate-700">0件</span>
+                        <div class="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-receipt"></i></div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">販売点数</span>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="statTotalQuantity" class="text-xl sm:text-2xl font-extrabold text-slate-700">0個</span>
+                        <div class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg"><i class="fa-solid fa-boxes-stacked"></i></div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">本日の売上</span>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="statTodaySales" class="text-xl sm:text-2xl font-extrabold text-indigo-600">¥0</span>
+                        <div class="p-1.5 bg-amber-50 text-amber-600 rounded-lg"><i class="fa-solid fa-calendar-day"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- Input Registration Form (Left Column on Desktop) -->
+                <div class="lg:col-span-5 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200/80 h-fit space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center space-x-2">
+                            <i id="formIcon" class="fa-solid fa-plus-circle text-indigo-600"></i>
+                            <span id="formTitle">売上データの登録</span>
+                        </h2>
+                        <button id="cancelEditBtn" class="hidden text-xs text-slate-500 hover:text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md transition">
+                            編集キャンセル
+                        </button>
+                    </div>
+
+                    <!-- Input Validation Alert Message -->
+                    <div id="formValidationAlert" class="hidden p-3 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl space-y-1">
+                        <div class="font-bold flex items-center space-x-1">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span>入力内容をご確認ください</span>
+                        </div>
+                        <ul id="validationList" class="list-disc list-inside space-y-0.5"></ul>
+                    </div>
+
+                    <form id="salesForm" class="space-y-4">
+                        <input type="hidden" id="editRecordId" value="">
+
+                        <!-- 1. 商品名 (Product Name) -->
+                        <div>
+                            <label for="productName" class="block text-xs font-semibold text-slate-600 uppercase mb-1">
+                                商品名 <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="productName" placeholder="例: コーヒー, Tシャツ" required
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition text-sm">
+                        </div>
+
+                        <!-- 2. 単価 (Unit Price) & 3. 個数 (Quantity) Row -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="unitPrice" class="block text-xs font-semibold text-slate-600 uppercase mb-1">
+                                    単価 (円) <span class="text-red-500">*</span>
+                                </label>
+                                <input type="number" id="unitPrice" min="0" placeholder="0" required
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition text-sm">
+                            </div>
+
+                            <div>
+                                <label for="quantity" class="block text-xs font-semibold text-slate-600 uppercase mb-1">
+                                    個数 <span class="text-red-500">*</span>
+                                </label>
+                                <input type="number" id="quantity" min="1" value="1" required
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition text-sm">
+                            </div>
+                        </div>
+
+                        <!-- Auto Calculated Total Preview -->
+                        <div class="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3 flex justify-between items-center">
+                            <span class="text-xs font-semibold text-indigo-900">合計金額 (自動計算):</span>
+                            <span id="calculatedTotalDisplay" class="text-lg font-bold text-indigo-600">¥0</span>
+                        </div>
+
+                        <!-- 4. 日付 (Date) -->
+                        <div>
+                            <label for="saleDate" class="block text-xs font-semibold text-slate-600 uppercase mb-1">
+                                日付 <span class="text-red-500">*</span>
+                            </label>
+                            <input type="date" id="saleDate" required
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition text-sm">
+                        </div>
+
+                        <!-- 5. メモ (Memo) -->
+                        <div>
+                            <label for="memo" class="block text-xs font-semibold text-slate-600 uppercase mb-1">
+                                メモ
+                            </label>
+                            <textarea id="memo" rows="2" placeholder="備考や担当者メモを入力..."
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition text-sm resize-none"></textarea>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" id="submitFormBtn"
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-indigo-200 transition duration-150 flex items-center justify-center space-x-2">
+                            <i id="submitIcon" class="fa-solid fa-check"></i>
+                            <span id="submitBtnText">登録する</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Data List & Analytics Column (Right Column on Desktop) -->
+                <div class="lg:col-span-7 space-y-6">
+
+                    <!-- Filter & Search Controls -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div class="relative w-full sm:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                            <input type="text" id="searchInput" placeholder="商品名で絞り込み..."
+                                class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs">
+                        </div>
+                        <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                            <select id="sortBy" class="px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+                                <option value="dateDesc">日付が新しい順</option>
+                                <option value="dateAsc">日付が古い順</option>
+                                <option value="amountDesc">金額が高い順</option>
+                            </select>
+                            <button id="toggleGraphBtn" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition flex items-center space-x-1">
+                                <i class="fa-solid fa-chart-line"></i>
+                                <span>グラフ表示</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sales Visualization Chart (Collapsible) -->
+                    <div id="chartContainer" class="hidden bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-bold text-slate-700 flex items-center space-x-2">
+                                <i class="fa-solid fa-chart-bar text-indigo-600"></i>
+                                <span>日別売上グラフ</span>
+                            </h3>
+                            <span class="text-xs text-slate-400">直近の売上推移</span>
+                        </div>
+                        <div class="relative h-56 w-full">
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Daily Summary Aggregation View -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center space-x-2">
+                                <i class="fa-solid fa-list-check text-indigo-600"></i>
+                                <span>登録データ一覧</span>
+                            </h3>
+                            <span id="recordCountBadge" class="text-xs bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-full font-bold">0 件</span>
+                        </div>
+
+                        <!-- Data List Container -->
+                        <div class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto" id="dataListContainer">
+                            <!-- Loading Spinner -->
+                            <div id="loadingState" class="py-12 text-center text-slate-400">
+                                <i class="fa-solid fa-circle-notch fa-spin text-2xl text-indigo-600 mb-2"></i>
+                                <p class="text-xs">データを読み込んでいます...</p>
+                            </div>
+
+                            <!-- Empty State -->
+                            <div id="emptyState" class="hidden py-12 text-center text-slate-400 space-y-2">
+                                <i class="fa-solid fa-inbox text-3xl text-slate-300"></i>
+                                <p class="text-sm font-medium">登録されている売上データがありません</p>
+                                <p class="text-xs text-slate-400">左側のフォームから売上を登録してください</p>
+                            </div>
+
+                            <!-- List Items Rendered Dynamically Here -->
+                            <div id="salesList" class="divide-y divide-slate-100"></div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Aggregated Summary Table -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
+                        <h3 class="text-sm font-bold text-slate-800 flex items-center space-x-2">
+                            <i class="fa-solid fa-calendar-days text-indigo-600"></i>
+                            <span>日付ごとの合計金額集計</span>
+                        </h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="border-b border-slate-200 text-slate-400 uppercase tracking-wider">
+                                        <th class="py-2 px-3">日付</th>
+                                        <th class="py-2 px-3 text-right">取引件数</th>
+                                        <th class="py-2 px-3 text-right">合計金額</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dailySummaryBody" class="divide-y divide-slate-100 font-medium">
+                                    <tr>
+                                        <td colspan="3" class="py-4 text-center text-slate-400">集計データがありません</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Help & Deployment Information Card for GitHub / Firebase Submission -->
+            <div class="bg-indigo-900 text-indigo-100 p-6 rounded-2xl shadow-lg space-y-4 mt-8">
+                <div class="flex items-center space-x-2 border-b border-indigo-800 pb-3">
+                    <i class="fa-solid fa-circle-info text-amber-400 text-lg"></i>
+                    <h3 class="font-bold text-white">課題提出・環境構築ガイド (GitHub & Firebase Hosting)</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs leading-relaxed">
+                    <div class="bg-indigo-950/60 p-4 rounded-xl border border-indigo-800">
+                        <p class="font-bold text-amber-300 mb-1"><i class="fa-brands fa-github mr-1"></i> 1. GitHubリポジトリ作成 (posapp)</p>
+                        <ol class="list-decimal list-inside space-y-1 text-indigo-200">
+                            <li>GitHubにて <code class="bg-indigo-900 px-1 py-0.5 rounded text-white">posapp</code> という名前の新しいリポジトリを作成。</li>
+                            <li>この HTML ファイルを <code class="bg-indigo-900 px-1 py-0.5 rounded text-white">index.html</code> として保存。</li>
+                            <li><code class="bg-indigo-900 px-1 py-0.5 rounded text-white">git init</code>, <code class="bg-indigo-900 px-1 py-0.5 rounded text-white">git add .</code>, <code class="bg-indigo-900 px-1 py-0.5 rounded text-white">git commit</code> 後に GitHub へ Push します。</li>
+                        </ol>
+                    </div>
+                    <div class="bg-indigo-950/60 p-4 rounded-xl border border-indigo-800">
+                        <p class="font-bold text-amber-300 mb-1"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> 2. Firebase Hostingで公開</p>
+                        <ol class="list-decimal list-inside space-y-1 text-indigo-200">
+                            <li>ターミナルで <code class="bg-indigo-900 px-1 py-0.5 rounded text-white">firebase login</code> および <code class="bg-indigo-900 px-1 py-0.5 rounded text-white">firebase init</code> を実行。</li>
+                            <li>Hostingを選択し、プロジェクト <code class="bg-indigo-900 px-1 py-0.5 rounded text-white">aaaa-7e2ec</code> を指定。</li>
+                            <li>公開ディレクトリに <code class="bg-indigo-900 px-1 py-0.5 rounded text-white">index.html</code> を配置し <code class="bg-indigo-900 px-1 py-0.5 rounded text-white">firebase deploy</code> で公開完了！</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Custom Modal for Delete Confirmation -->
+    <div id="deleteModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4 animate-fade-in border border-slate-100">
+            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto">
+                <i class="fa-solid fa-trash-can text-xl"></i>
+            </div>
+            <div class="text-center space-y-1">
+                <h3 class="text-base font-bold text-slate-800">データを削除しますか？</h3>
+                <p class="text-xs text-slate-500">この操作は取り消せません。本当に削除してもよろしいですか？</p>
+            </div>
+            <div class="flex space-x-3 pt-2">
+                <button id="cancelDeleteBtn" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+                    キャンセル
+                </button>
+                <button id="confirmDeleteBtn" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition shadow-md shadow-red-200">
+                    削除する
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Standard JS SDK Module Setup -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            GoogleAuthProvider, 
+            signInWithPopup, 
+            signInWithCustomToken, 
+            signInAnonymously, 
+            signOut, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            addDoc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Provided Firebase Configuration
+        const userProvidedConfig = {
+            apiKey: "AIzaSyAnsB3ggx7dcfYH_uNItcel0dzzCA6tcUI",
+            authDomain: "aaaa-7e2ec.firebaseapp.com",
+            projectId: "aaaa-7e2ec",
+            storageBucket: "aaaa-7e2ec.firebasestorage.app",
+            messagingSenderId: "691879980592",
+            appId: "1:691879980592:web:debd59f5657684e18d07f5"
+        };
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userProvidedConfig;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'posapp';
+
+        // Initialize Firebase Services
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Application State
+        let currentUser = null;
+        let salesRecords = [];
+        let unsubscribeSnapshot = null;
+        let pendingDeleteId = null;
+        let chartInstance = null;
+
+        // DOM Elements
+        const loginScreen = document.getElementById('loginScreen');
+        const appScreen = document.getElementById('appScreen');
+        const googleLoginBtn = document.getElementById('googleLoginBtn');
+        const authErrorMessage = document.getElementById('authErrorMessage');
+        const userProfileArea = document.getElementById('userProfileArea');
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        const salesForm = document.getElementById('salesForm');
+        const editRecordId = document.getElementById('editRecordId');
+        const productName = document.getElementById('productName');
+        const unitPrice = document.getElementById('unitPrice');
+        const quantity = document.getElementById('quantity');
+        const saleDate = document.getElementById('saleDate');
+        const memo = document.getElementById('memo');
+        const calculatedTotalDisplay = document.getElementById('calculatedTotalDisplay');
+        const formTitle = document.getElementById('formTitle');
+        const formIcon = document.getElementById('formIcon');
+        const submitBtnText = document.getElementById('submitBtnText');
+        const submitIcon = document.getElementById('submitIcon');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const formValidationAlert = document.getElementById('formValidationAlert');
+        const validationList = document.getElementById('validationList');
+
+        const salesList = document.getElementById('salesList');
+        const loadingState = document.getElementById('loadingState');
+        const emptyState = document.getElementById('emptyState');
+        const recordCountBadge = document.getElementById('recordCountBadge');
+        const searchInput = document.getElementById('searchInput');
+        const sortBy = document.getElementById('sortBy');
+        const dailySummaryBody = document.getElementById('dailySummaryBody');
+
+        const statTotalSales = document.getElementById('statTotalSales');
+        const statTotalCount = document.getElementById('statTotalCount');
+        const statTotalQuantity = document.getElementById('statTotalQuantity');
+        const statTodaySales = document.getElementById('statTodaySales');
+
+        const toggleGraphBtn = document.getElementById('toggleGraphBtn');
+        const chartContainer = document.getElementById('chartContainer');
+
+        const deleteModal = document.getElementById('deleteModal');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+        // Default Today's Date in YYYY-MM-DD
+        const getTodayString = () => {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        saleDate.value = getTodayString();
+
+        // Calculate Total Amount Real-time (Unit Price * Quantity)
+        function updateCalculatedTotal() {
+            const price = parseFloat(unitPrice.value) || 0;
+            const qty = parseInt(quantity.value) || 0;
+            const total = Math.max(0, price * qty);
+            calculatedTotalDisplay.textContent = `¥${total.toLocaleString()}`;
+            return total;
+        }
+
+        unitPrice.addEventListener('input', updateCalculatedTotal);
+        quantity.addEventListener('input', updateCalculatedTotal);
+
+        // Google Authentication Login Event
+        googleLoginBtn.addEventListener('click', async () => {
+            authErrorMessage.classList.add('hidden');
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Google Auth error:", error);
+                // Fallback for iframe popup restriction
+                try {
+                    if (typeof __initial_auth_token !== 'undefined') {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (fallbackErr) {
+                    authErrorMessage.textContent = `ログインエラー: ${error.message}`;
+                    authErrorMessage.classList.remove('hidden');
+                }
+            }
+        });
+
+        // Logout Event
+        logoutBtn.addEventListener('click', async () => {
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+                unsubscribeSnapshot = null;
+            }
+            await signOut(auth);
+        });
+
+        // Auth State Listener
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                // UI Toggle
+                loginScreen.classList.add('hidden');
+                appScreen.classList.remove('hidden');
+                userProfileArea.classList.remove('hidden');
+
+                userName.textContent = user.displayName || user.email || "ユーザー";
+                if (user.photoURL) {
+                    userAvatar.src = user.photoURL;
+                }
+
+                // Start Firestore realtime sync
+                initRealtimeSync();
+            } else {
+                currentUser = null;
+                salesRecords = [];
+                loginScreen.classList.remove('hidden');
+                appScreen.classList.add('hidden');
+                userProfileArea.classList.add('hidden');
+            }
+        });
+
+        // MANDATORY RULE 1: /artifacts/{appId}/users/{userId}/sales
+        function initRealtimeSync() {
+            if (!currentUser) return;
+
+            loadingState.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            salesList.innerHTML = '';
+
+            const userSalesCollection = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'sales');
+
+            // Unsubscribe existing snapshot listener if any
+            if (unsubscribeSnapshot) unsubscribeSnapshot();
+
+            // MANDATORY RULE 2: Simple query without complex orderBy in Firestore
+            unsubscribeSnapshot = onSnapshot(userSalesCollection, (snapshot) => {
+                salesRecords = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    salesRecords.push({
+                        id: doc.id,
+                        ...data
+                    });
+                });
+
+                loadingState.classList.add('hidden');
+                renderDashboard();
+            }, (error) => {
+                console.error("Firestore snapshot error:", error);
+                loadingState.classList.add('hidden');
+            });
+        }
+
+        // Validate inputs
+        function validateForm() {
+            const errors = [];
+            if (!productName.value.trim()) {
+                errors.push("商品名を入力してください。");
+            }
+            if (unitPrice.value === '' || parseFloat(unitPrice.value) < 0) {
+                errors.push("単価には0以上の数値を入力してください。");
+            }
+            if (!quantity.value || parseInt(quantity.value) < 1) {
+                errors.push("個数には1以上の整数を入力してください。");
+            }
+            if (!saleDate.value) {
+                errors.push("日付を選択してください。");
+            }
+
+            if (errors.length > 0) {
+                validationList.innerHTML = errors.map(e => `<li>${e}</li>`).join('');
+                formValidationAlert.classList.remove('hidden');
+                return false;
+            }
+
+            formValidationAlert.classList.add('hidden');
+            return true;
+        }
+
+        // Form Submission (Add or Edit)
+        salesForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+            if (!validateForm()) return;
+
+            const priceNum = parseFloat(unitPrice.value);
+            const qtyNum = parseInt(quantity.value);
+            const totalNum = priceNum * qtyNum;
+
+            const recordData = {
+                productName: productName.value.trim(),
+                unitPrice: priceNum,
+                quantity: qtyNum,
+                totalAmount: totalNum,
+                saleDate: saleDate.value,
+                memo: memo.value.trim(),
+                updatedAt: new Date().toISOString()
+            };
+
+            submitFormBtn.disabled = true;
+            submitBtnText.textContent = "保存中...";
+
+            try {
+                const userSalesCollection = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'sales');
+
+                if (editRecordId.value) {
+                    // Update existing record
+                    const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'sales', editRecordId.value);
+                    await updateDoc(docRef, recordData);
+                } else {
+                    // Create new record
+                    recordData.createdAt = new Date().toISOString();
+                    await addDoc(userSalesCollection, recordData);
+                }
+
+                resetForm();
+            } catch (err) {
+                console.error("Error saving record:", err);
+                validationList.innerHTML = `<li>保存中にエラーが発生しました: ${err.message}</li>`;
+                formValidationAlert.classList.remove('hidden');
+            } finally {
+                submitFormBtn.disabled = false;
+            }
+        });
+
+        // Reset Form to Add Mode
+        function resetForm() {
+            salesForm.reset();
+            editRecordId.value = '';
+            saleDate.value = getTodayString();
+            updateCalculatedTotal();
+            formTitle.textContent = "売上データの登録";
+            formIcon.className = "fa-solid fa-plus-circle text-indigo-600";
+            submitBtnText.textContent = "登録する";
+            submitIcon.className = "fa-solid fa-check";
+            cancelEditBtn.classList.add('hidden');
+            formValidationAlert.classList.add('hidden');
+        }
+
+        cancelEditBtn.addEventListener('click', resetForm);
+
+        // Render Dashboard Data, Stats, and Charts
+        function renderDashboard() {
+            // 1. Calculate KPI Statistics
+            let totalSales = 0;
+            let totalQty = 0;
+            let todaySales = 0;
+            const todayStr = getTodayString();
+
+            salesRecords.forEach(rec => {
+                totalSales += (rec.totalAmount || 0);
+                totalQty += (rec.quantity || 0);
+                if (rec.saleDate === todayStr) {
+                    todaySales += (rec.totalAmount || 0);
+                }
+            });
+
+            statTotalSales.textContent = `¥${totalSales.toLocaleString()}`;
+            statTotalCount.textContent = `${salesRecords.length}件`;
+            statTotalQuantity.textContent = `${totalQty.toLocaleString()}個`;
+            statTodaySales.textContent = `¥${todaySales.toLocaleString()}`;
+
+            // 2. Filter & Sort Records
+            const query = searchInput.value.toLowerCase().trim();
+            let filtered = salesRecords.filter(rec => 
+                (rec.productName || '').toLowerCase().includes(query) ||
+                (rec.memo || '').toLowerCase().includes(query)
+            );
+
+            const sortMode = sortBy.value;
+            filtered.sort((a, b) => {
+                if (sortMode === 'dateDesc') return (b.saleDate || '').localeCompare(a.saleDate || '');
+                if (sortMode === 'dateAsc') return (a.saleDate || '').localeCompare(b.saleDate || '');
+                if (sortMode === 'amountDesc') return (b.totalAmount || 0) - (a.totalAmount || 0);
+                return 0;
+            });
+
+            recordCountBadge.textContent = `${filtered.length} 件`;
+
+            // Render List Items
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                salesList.innerHTML = '';
+            } else {
+                emptyState.classList.add('hidden');
+                salesList.innerHTML = filtered.map(rec => `
+                    <div class="p-4 hover:bg-slate-50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
+                                    <i class="fa-regular fa-calendar mr-1"></i>${rec.saleDate}
+                                </span>
+                                <h4 class="font-bold text-slate-800 text-base">${escapeHtml(rec.productName)}</h4>
+                            </div>
+                            <div class="text-xs text-slate-500 flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5">
+                                <span>単価: ¥${(rec.unitPrice || 0).toLocaleString()}</span>
+                                <span>数量: ${rec.quantity}個</span>
+                                ${rec.memo ? `<span class="italic text-slate-400"><i class="fa-regular fa-comment mr-1"></i>${escapeHtml(rec.memo)}</span>` : ''}
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between sm:justify-end space-x-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
+                            <div class="text-right">
+                                <div class="text-xs text-slate-400">小計</div>
+                                <div class="text-base font-extrabold text-indigo-600">¥${(rec.totalAmount || 0).toLocaleString()}</div>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <button onclick="window.editRecord('${rec.id}')" title="編集"
+                                    class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button onclick="window.askDeleteRecord('${rec.id}')" title="削除"
+                                    class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // 3. Daily Summary Aggregation Table
+            renderDailySummary();
+
+            // 4. Update Sales Chart
+            updateChart();
+        }
+
+        // Aggregate sales by date
+        function renderDailySummary() {
+            const dateMap = {};
+            salesRecords.forEach(rec => {
+                const date = rec.saleDate || '未定';
+                if (!dateMap[date]) {
+                    dateMap[date] = { count: 0, total: 0 };
+                }
+                dateMap[date].count += 1;
+                dateMap[date].total += (rec.totalAmount || 0);
+            });
+
+            const sortedDates = Object.keys(dateMap).sort().reverse();
+
+            if (sortedDates.length === 0) {
+                dailySummaryBody.innerHTML = `<tr><td colspan="3" class="py-4 text-center text-slate-400">集計データがありません</td></tr>`;
+                return;
+            }
+
+            dailySummaryBody.innerHTML = sortedDates.map(date => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-2.5 px-3 font-semibold text-slate-700">${date}</td>
+                    <td class="py-2.5 px-3 text-right text-slate-500">${dateMap[date].count} 件</td>
+                    <td class="py-2.5 px-3 text-right font-bold text-indigo-600">¥${dateMap[date].total.toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Render Chart.js Sales Graph
+        function updateChart() {
+            if (chartContainer.classList.contains('hidden')) return;
+
+            const dateMap = {};
+            salesRecords.forEach(rec => {
+                const date = rec.saleDate;
+                if (!date) return;
+                dateMap[date] = (dateMap[date] || 0) + (rec.totalAmount || 0);
+            });
+
+            const dates = Object.keys(dateMap).sort().slice(-10); // Last 10 sales dates
+            const totals = dates.map(d => dateMap[d]);
+
+            const ctx = document.getElementById('salesChart').getContext('2d');
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: '売上金額 (円)',
+                        data: totals,
+                        backgroundColor: 'rgba(79, 70, 229, 0.75)',
+                        borderColor: 'rgb(79, 70, 229)',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: (val) => '¥' + val.toLocaleString()
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        toggleGraphBtn.addEventListener('click', () => {
+            chartContainer.classList.toggle('hidden');
+            if (!chartContainer.classList.contains('hidden')) {
+                updateChart();
+            }
+        });
+
+        // Global Edit Handler
+        window.editRecord = function(id) {
+            const record = salesRecords.find(r => r.id === id);
+            if (!record) return;
+
+            editRecordId.value = record.id;
+            productName.value = record.productName || '';
+            unitPrice.value = record.unitPrice || 0;
+            quantity.value = record.quantity || 1;
+            saleDate.value = record.saleDate || getTodayString();
+            memo.value = record.memo || '';
+
+            updateCalculatedTotal();
+
+            formTitle.textContent = "売上データの編集";
+            formIcon.className = "fa-solid fa-pen-to-square text-indigo-600";
+            submitBtnText.textContent = "更新保存";
+            submitIcon.className = "fa-solid fa-arrows-rotate";
+            cancelEditBtn.classList.remove('hidden');
+
+            // Scroll form into view on mobile
+            salesForm.scrollIntoView({ behavior: 'smooth' });
+        };
+
+        // Global Delete Modal Triggers
+        window.askDeleteRecord = function(id) {
+            pendingDeleteId = id;
+            deleteModal.classList.remove('hidden');
+        };
+
+        cancelDeleteBtn.addEventListener('click', () => {
+            pendingDeleteId = null;
+            deleteModal.classList.add('hidden');
+        });
+
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (!pendingDeleteId || !currentUser) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'sales', pendingDeleteId);
+                await deleteDoc(docRef);
+            } catch (err) {
+                console.error("Delete error:", err);
+            } finally {
+                pendingDeleteId = null;
+                deleteModal.classList.add('hidden');
+            }
+        });
+
+        // Filter and Search listeners
+        searchInput.addEventListener('input', renderDashboard);
+        sortBy.addEventListener('change', renderDashboard);
+
+        // Helper string escaper
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
