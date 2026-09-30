@@ -483,7 +483,7 @@
                 themeIcon.className = "fa-solid fa-moon text-white";
             }
             if (chartInstance && !chartContainer.classList.contains('hidden')) {
-                updateChart();
+                renderDashboard();
             }
         }
 
@@ -631,7 +631,6 @@
             }
         });
 
-        // MANDATORY RULE 1: /artifacts/{appId}/users/{userId}/sales
         function initRealtimeSync() {
             if (!currentUser) return;
 
@@ -641,10 +640,8 @@
 
             const userSalesCollection = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'sales');
 
-            // Unsubscribe existing snapshot listener if any
             if (unsubscribeSnapshot) unsubscribeSnapshot();
 
-            // MANDATORY RULE 2: Simple query without complex orderBy in Firestore
             unsubscribeSnapshot = onSnapshot(userSalesCollection, (snapshot) => {
                 salesRecords = [];
                 snapshot.forEach((doc) => {
@@ -709,7 +706,8 @@
                 updatedAt: new Date().toISOString()
             };
 
-            submitFormBtn.disabled = true;
+            const submitBtn = document.getElementById('submitFormBtn');
+            submitBtn.disabled = true;
             submitBtnText.textContent = "保存中...";
 
             try {
@@ -731,7 +729,7 @@
                 validationList.innerHTML = `<li>保存中にエラーが発生しました: ${err.message}</li>`;
                 formValidationAlert.classList.remove('hidden');
             } finally {
-                submitFormBtn.disabled = false;
+                submitBtn.disabled = false;
             }
         });
 
@@ -753,13 +751,30 @@
 
         // Render Dashboard Data, Stats, and Charts
         function renderDashboard() {
-            // 1. Calculate KPI Statistics
+            // 1. Filter Records by Query
+            const query = searchInput.value.toLowerCase().trim();
+            let filtered = salesRecords.filter(rec => {
+                const prodName = String(rec.productName || '').toLowerCase();
+                const memoText = String(rec.memo || '').toLowerCase();
+                return prodName.includes(query) || memoText.includes(query);
+            });
+
+            // 2. Sort Filtered Records
+            const sortMode = sortBy.value;
+            filtered.sort((a, b) => {
+                if (sortMode === 'dateDesc') return (b.saleDate || '').localeCompare(a.saleDate || '');
+                if (sortMode === 'dateAsc') return (a.saleDate || '').localeCompare(b.saleDate || '');
+                if (sortMode === 'amountDesc') return (b.totalAmount || 0) - (a.totalAmount || 0);
+                return 0;
+            });
+
+            // 3. Calculate KPI Statistics based on FILTERED results
             let totalSales = 0;
             let totalQty = 0;
             let todaySales = 0;
             const todayStr = getTodayString();
 
-            salesRecords.forEach(rec => {
+            filtered.forEach(rec => {
                 totalSales += (rec.totalAmount || 0);
                 totalQty += (rec.quantity || 0);
                 if (rec.saleDate === todayStr) {
@@ -768,24 +783,9 @@
             });
 
             statTotalSales.textContent = `¥${totalSales.toLocaleString()}`;
-            statTotalCount.textContent = `${salesRecords.length}件`;
+            statTotalCount.textContent = `${filtered.length}件`;
             statTotalQuantity.textContent = `${totalQty.toLocaleString()}個`;
             statTodaySales.textContent = `¥${todaySales.toLocaleString()}`;
-
-            // 2. Filter & Sort Records
-            const query = searchInput.value.toLowerCase().trim();
-            let filtered = salesRecords.filter(rec => 
-                (rec.productName || '').toLowerCase().includes(query) ||
-                (rec.memo || '').toLowerCase().includes(query)
-            );
-
-            const sortMode = sortBy.value;
-            filtered.sort((a, b) => {
-                if (sortMode === 'dateDesc') return (b.saleDate || '').localeCompare(a.saleDate || '');
-                if (sortMode === 'dateAsc') return (a.saleDate || '').localeCompare(b.saleDate || '');
-                if (sortMode === 'amountDesc') return (b.totalAmount || 0) - (a.totalAmount || 0);
-                return 0;
-            });
 
             recordCountBadge.textContent = `${filtered.length} 件`;
 
@@ -831,17 +831,17 @@
                 `).join('');
             }
 
-            // 3. Daily Summary Aggregation Table
-            renderDailySummary();
+            // 4. Update Daily Summary Aggregation Table (Filtered)
+            renderDailySummary(filtered);
 
-            // 4. Update Sales Chart
-            updateChart();
+            // 5. Update Sales Chart (Filtered)
+            updateChart(filtered);
         }
 
         // Aggregate sales by date
-        function renderDailySummary() {
+        function renderDailySummary(records = salesRecords) {
             const dateMap = {};
-            salesRecords.forEach(rec => {
+            records.forEach(rec => {
                 const date = rec.saleDate || '未定';
                 if (!dateMap[date]) {
                     dateMap[date] = { count: 0, total: 0 };
@@ -867,11 +867,11 @@
         }
 
         // Render Chart.js Sales Graph
-        function updateChart() {
+        function updateChart(records = salesRecords) {
             if (chartContainer.classList.contains('hidden')) return;
 
             const dateMap = {};
-            salesRecords.forEach(rec => {
+            records.forEach(rec => {
                 const date = rec.saleDate;
                 if (!date) return;
                 dateMap[date] = (dateMap[date] || 0) + (rec.totalAmount || 0);
@@ -929,7 +929,7 @@
         toggleGraphBtn.addEventListener('click', () => {
             chartContainer.classList.toggle('hidden');
             if (!chartContainer.classList.contains('hidden')) {
-                updateChart();
+                renderDashboard();
             }
         });
 
@@ -988,7 +988,7 @@
         // Helper string escaper
         function escapeHtml(str) {
             if (!str) return '';
-            return str
+            return String(str)
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;")
